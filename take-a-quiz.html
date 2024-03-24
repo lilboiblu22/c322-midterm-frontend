@@ -40,16 +40,16 @@
     let questionsList = [];
     let answersChosenList = [];
     let questionScores = [];
-    let host = "http://localhost:8080";
-    let currentQuizIndex = null;
-    let currentQuestionIndex = null;
     let navbar = document.getElementById("navbar");
     let quizContainer = document.getElementById("quizContainer");
     let quizintruction = document.getElementById("quizintruction");
     let choiceContainer = document.getElementById("choiceContainer");
     let nextButton = document.getElementById("nextButton");
     let previousButton = document.getElementById("previousButton");
-    
+    let host = "http://localhost:8080";
+    let currentQuizIndex = null;
+    let currentQuestionIndex = null;
+
     displayTheQuizzes();
 
     async function getQuizzes() {
@@ -110,8 +110,7 @@
       let currentQuiz = quizzesList[currentQuizIndex];
       let questions = currentQuiz.questions;
       questionsList = questions;
-      let question = questions[currentQuestionIndex];
-
+      let question = questions[currentQuestionIndex]; //below the this line, class="questionCard" shows up above the image can't figure out why
       choiceContainer.innerHTML = `<div> class= "questionCard">
                                     <img src = "http://localhost:8080/questions/${question.id}/image" alt="question" style = "width:100%">
                                     <div class = "container">
@@ -139,11 +138,9 @@
                                     <div class = "nextBTN">
                                       <button id = "nextBTTN" onclick="nextQuestion()"> Next </button>
                                     </div>
-                                  </div>`;
-                                  
+                                  </div>`;          
       let previousBTN = document.querySelector(".prevBTN button");
       let nextBTN = document.querySelector(".nextBTN button");
-
       previousBTN.style.display = currentQuestionIndex === 0 ? "none" : "block";
       nextBTN.style.display = "block";
       document.getElementById("quizList").style.display = "none";
