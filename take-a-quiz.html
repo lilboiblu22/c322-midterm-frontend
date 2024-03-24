@@ -46,7 +46,7 @@
     let choiceContainer = document.getElementById("choiceContainer");
     let nextButton = document.getElementById("nextButton");
     let previousButton = document.getElementById("previousButton");
-    let host = "http://localhost:8080";
+    let host = "https://midterm-backend-latest-qggt.onrender.com";
     let currentQuizIndex = null;
     let currentQuestionIndex = null;
 
@@ -112,7 +112,7 @@
       questionsList = questions;
       let question = questions[currentQuestionIndex]; //below the this line, class="questionCard" shows up above the image can't figure out why
       choiceContainer.innerHTML = `<div> class= "questionCard">
-                                    <img src = "http://localhost:8080/questions/${question.id}/image" alt="question" style = "width:100%">
+                                    <img src = "https://midterm-backend-latest-qggt.onrender.com/questions/${question.id}/image" alt="question" style = "width:100%">
                                     <div class = "container">
                                       <h4><b>${question.id}</b></h4>
                                       <p>${question.description}</p>
