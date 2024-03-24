@@ -3,9 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Create a Quiz</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="general.css">
+  <link rel="stylesheet" href="cards.css">
 </head>
 <body>
+  <ul class="topnav">
+    <li><a  href="index.html">Home</a></li>
+    <li><a class="active" href="add-question.html">Add questions</a></li>
+    <li><a href="make-a-quiz.html">Create a quiz</a></li>
+    <li><a href="take-a-quiz.html">Take a quiz</a></li>
+    <li class="right"><a href="#about">About</a></li>
+  </ul>
   
+  <form>
+    <label for="quizTitle">Quiz Title:</label>
+    <input
+      type="text"
+      id="quizTitle"
+      name="quizTitle"
+      required
+    ><br />
+    <br />
+
+    <input type="button" value="Save your Changes" onclick="saveChanges()" />
+    <br />
+    <br />
+    <input type="button" value="Save this quiz and Start a new one" onclick="saveAndRefresh()"/>
+  </form>
+
+  <div id="quizList" class="cards" onclick="remove(event,this)"></div>
+
+  <h2>Questions Bank</h2>
+  <div id="list" class="cards" ></div>
+
+  <script>
+    let host = "http://localhost:8080";
+    let questions = [];
+    displayTheQuestions();
+
+    async function getAll() {
+        let response = await fetch(host + "/questions");
+        let result = await response.json();
+        return result;
+      }
+
+      async function displayTheQuestions() {
+        if (questions.length == 0) {
+          questions = await getAll();
+        }
+
+        let list = document.getElementById("list");
+        list.innerHTML = "";
+
+        for (let question of questions) {
+          let div = document.createElement("div");
+          div.className = "card";
+          div.onclick = function(){add(this);};
+          let innerHtml = `
+         
+        <img src="http://localhost:8080/questions/${question.id}/image" alt="question" style="width:100%">
+        <div class="container">
+          <h4><b>${question.id}</b></h4> 
+          <p>${question.description}</p>
+          <form>
+              <input type="radio" id="q${question.id}ptionA" name="q2Answer" value="A">
+              <label for="q${question.id}ptionA">${question.choices[0]}</label><br>
+
+              <input type="radio" id="q${question.id}ptionB" name="q2Answer" value="B">
+              <label for="q${question.id}ptionB">${question.choices[1]}</label><br>
+
+              <input type="radio" id="q${question.id}ptionC" name="q2Answer" value="C">
+              <label for="q${question.id}ptionC">${question.choices[2]}</label><br>       
+          </form> 
+        </div>
+     
+            `;
+          div.innerHTML = innerHtml;
+          list.appendChild(div);
+        }
+      }
+      
+      function add(clickedCard){
+        let quizList = document.getElementById("quizList");
+        let newCard = clickedCard.cloneNode(true);
+        newCard.onclick = function(event) {remove(event, this);};
+        quizList.appendChild(newCard);
+      }
+
+      function remove(event, clickedCard){
+        event.stopPropagation();
+        clickedCard.parentNode.removeChild(clickedCard);
+      }
+
+      async function saveChanges(){
+        let quizTitle = document.getElementById("quizTitle").value;
+        let questionIds = [];
+        let quizList = document.getElementById("quizList");
+        let cards = quizList.getElementsByClassName("card");
+        for (let card of cards){
+          let questionId = card.getElementsByTagName("h4")[0].innerText;
+          questionIds.push(parseInt(questionId));
+        }
+        //couldn't get put to work, so I used post instead
+        let response = await fetch(host + "/quizzes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: quizTitle,
+            questionIds: questionIds,
+          }),
+        });
+      }
+
+      async function saveAndRefresh(){
+        let quizTitle = document.getElementById("quizTitle").value;
+        let questionIds = [];
+        let quizList = document.getElementById("quizList");
+        let cards = quizList.getElementsByClassName("card");
+        for (let card of cards){
+          let questionId = card.getElementsByTagName("h4")[0].innerText;
+          questionIds.push(parseInt(questionId));
+        }
+        let response = await fetch(host + "/quizzes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: quizTitle,
+            questionIds: questionIds,
+          }),
+        });
+        location.reload();
+      }
+
+  </script>
+
 </body>
 </html>

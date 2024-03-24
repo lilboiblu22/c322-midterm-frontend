@@ -3,9 +3,216 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Take A Quiz</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="general.css">
+  <link rel="stylesheet" href="cards.css">
 </head>
 <body>
+  <ul class="topnav" id = "navbar">
+    <li><a  href="index.html">Home</a></li>
+    <li><a class="active" href="add-question.html">Add questions</a></li>
+    <li><a href="make-a-quiz.html">Create a quiz</a></li>
+    <li><a href="take-a-quiz.html">Take a quiz</a></li>
+    <li class="right"><a href="#about">About</a></li>
+  </ul>
+<div id="quizintruction">
+  <h2>Here are the list of all available quizzes. Click on a quiz to start taking the quiz.</h2>
+</div>
+  <div class = "container" id = "quizList">
+  </div>
+
+  <div class = "container" id = "quizContainer" style="display: none;">
+    <div id = "questionContainer">
+        <div id ="choiceContainer">
+
+        </div>
+    </div>
+  </div>
+
+  <div class ="scoreContainer" id = "scoreScreen">
+
+  </div>
+
+
+  <script>
+    let quizzesList = [];
+    let questionsList = [];
+    let answersChosenList = [];
+    let questionScores = [];
+    let host = "http://localhost:8080";
+    let currentQuizIndex = null;
+    let currentQuestionIndex = null;
+    let navbar = document.getElementById("navbar");
+    let quizContainer = document.getElementById("quizContainer");
+    let quizintruction = document.getElementById("quizintruction");
+    let choiceContainer = document.getElementById("choiceContainer");
+    let nextButton = document.getElementById("nextButton");
+    let previousButton = document.getElementById("previousButton");
+    
+    displayTheQuizzes();
+
+    async function getQuizzes() {
+      let request = {
+          method: "GET",
+          headers: {
+              "Content-Type": "application/json",
+          }
+      }
+      let response = await fetch(host + "/quizzes", request);
+      let result = await response.json();
+      return result;
+    }
+
+    async function displayTheQuizzes(){
+      if (quizzesList.length == 0 ){
+      quizzesList = await getQuizzes();
+      }
+      let quiz = document.getElementById("quizList");
+      quiz.innerHTML = "";
+      for (let q of quizzesList){
+        let div = document.createElement("div");
+        div.className = "card";
+        div.setAttribute("data-id", q.id);
+        div.addEventListener("click", () => beginQuiz(q))
+        let innerhtml = ` <div class = "container">
+                          <h4><b>${q.id}</b></h4>
+                          <p>${q.title}</p>
+                          <p>(${q.questions.length} questions)</p>
+                          </div>`;
+        div.innerHTML = innerhtml;
+        quiz.appendChild(div);
+      }
+    }
+
+    async function beginQuiz(quiz){
+      currentQuizIndex = quizzesList.findIndex(q => q.id === quiz.id);
+      currentQuestionIndex = 0;
+      removeNavbar();
+      document.getElementById("quizList").innerHTML = "";
+      document.getElementById("quizList").style.display = "none";
+      answersChosenList = new Array(quiz.questions.length).fill(null);
+      questionScores = new Array(quiz.questions.lenght).fill(0);
+      displayTheQuestions();
+    }
+
+    function displayNavbar(){
+      navbar.style.display = "block";
+    }
+
+    function removeNavbar(){
+      navbar.style.display = "none";
+      quizintruction.style.display = "none";
+      quizContainer.style.display = "block";
+    }
+
+    function displayTheQuestions(){
+      let currentQuiz = quizzesList[currentQuizIndex];
+      let questions = currentQuiz.questions;
+      questionsList = questions;
+      let question = questions[currentQuestionIndex];
+
+      choiceContainer.innerHTML = `<div> class= "questionCard">
+                                    <img src = "http://localhost:8080/questions/${question.id}/image" alt="question" style = "width:100%">
+                                    <div class = "container">
+                                      <h4><b>${question.id}</b></h4>
+                                      <p>${question.description}</p>
+                                      <form>
+                                        <input type = "radio" id = "q${question.id}ChoiceA" name="q${question.id}Answer" value="A" ${answersChosenList[currentQuestionIndex] === question.choices[0] ? "checked" : ""}>
+                                        <label for = "q${question.id}ChoiceA">${question.choices[0]}</label><br>
+
+                                        <input type = "radio" id = "q${question.id}ChoiceB" name="q${question.id}Answer" value="B" ${answersChosenList[currentQuestionIndex] === question.choices[1] ? "checked" : ""}>
+                                        <label for = "q${question.id}ChoiceB">${question.choices[1]}</label><br>
+
+                                        <input type = "radio" id = "q${question.id}ChoiceC" name="q${question.id}Answer" value="C" ${answersChosenList[currentQuestionIndex] === question.choices[2] ? "checked" : ""}>
+                                        <label for = "q${question.id}ChoiceC">${question.choices[2]}</label><br>
+                                      </form>
+                                    </div>
+                                   </div>
+                                  <div class = "containerFooter">
+                                    <div class = "prevBTN">
+                                      <button id = "previousBTN" onclick="previousQuestion()"> Previous </button>
+                                    </div>
+                                    <div class = "questionIndex">
+                                      <h5>(Question ${currentQuestionIndex + 1} out of ${questions.length})</h5>
+                                    </div>
+                                    <div class = "nextBTN">
+                                      <button id = "nextBTTN" onclick="nextQuestion()"> Next </button>
+                                    </div>
+                                  </div>`;
+                                  
+      let previousBTN = document.querySelector(".prevBTN button");
+      let nextBTN = document.querySelector(".nextBTN button");
+
+      previousBTN.style.display = currentQuestionIndex === 0 ? "none" : "block";
+      nextBTN.style.display = "block";
+      document.getElementById("quizList").style.display = "none";
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < (questionsList.length - 1)){
+        calculateScore();
+        currentQuestionIndex++;
+        displayTheQuestions();
+      }
+      else{
+        calculateScore();
+        displayResult();
+      }
+    }
+    
+    function previousQuestion(){
+      if(currentQuestionIndex > 0){
+        currentQuestionIndex--;
+        displayTheQuestions();
+      }
+    }
+
+    function calculateScore(){
+      let q = questionsList[currentQuestionIndex];
+      let selectedChoice = getSelectedAnswer(q.id, currentQuestionIndex);
+      if (selectedChoice === q.answer){
+        questionScores[currentQuestionIndex] = 1;
+      }
+      else{
+        questionScores[currentQuestionIndex] = 0;
+      }
+    }
   
+    function displayResult(){
+      let score = 0;
+      for (let qright of questionScores){
+        if (qright === 1){
+          score++;
+        }
+      }
+  
+    let quizTitle = quizzesList[currentQuizIndex].title;
+    let finishScreen = document.getElementById("scoreScreen");
+
+    finishScreen.innerHTML = ` <h3> You completed the Quiz "${quizTitle}".</h3>
+                               <h3> You scored ${score} out of ${questionsList.length}.</h3>`;
+    displayNavbar();
+    removeQuiz();
+    }
+    
+    function getSelectedAnswer(quizId, position){
+      let radioButtonName = `q${quizId}Answer`;
+      let radioButtonGroup = document.getElementsByName(radioButtonName);
+      for (let radioButton of radioButtonGroup){
+        if(radioButton.checked){
+          let answerSelected = document.querySelector(`label[for=${radioButton.id}]`).textContent;
+          answerSelected[position] = answerSelected;
+          return answerSelected;
+        }
+      }
+      return null;
+    }
+
+    function removeQuiz(){
+      quizContainer.style.display = "none";
+    }
+
+  </script>
 </body>
 </html>
